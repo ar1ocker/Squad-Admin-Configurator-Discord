@@ -41,7 +41,14 @@ class PrivilegesCog(discord.Cog):
         )
 
     @privileges_group.command()
-    async def get(self, context: discord.ApplicationContext, steam_id: int, hide: bool = True) -> None:
+    async def get(self, context: discord.ApplicationContext, steam_id: str, hide: bool = True) -> None:
+        # discord не поддерживает огромные int, которыми по факту являются steam_id 64
+        try:
+            int(steam_id)
+        except ValueError:
+            await context.send_response("Неправильный steam_id", ephemeral=True)
+            return
+
         permissions = self.get_permissions(context, "READ")
 
         if permissions == self.config["NONE_INDICATOR"]:
