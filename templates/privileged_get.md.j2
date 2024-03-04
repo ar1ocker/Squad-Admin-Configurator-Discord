@@ -1,0 +1,8 @@
+{% if user.is_active %}🟢{% else %}🔴{% endif %} *{{ user.name.capitalize()|escape_markdown }}*{% if user.date_of_end %}, до {{ user.date_of_end|format_datetime }}{% endif %}
+    {% for server_role in servers_roles %}
+```
+        {% if server_role.is_active %}🟢{% else %}🔴{% endif %} Сервер: {{ server_role.server.title.capitalize()|escape_markdown }}{% if server_role.date_of_end %}, до {{ server_role.date_of_end|format_datetime }}{% endif %}
+
+📋   Роли: {% for role in server_role.roles %}{{ role.title.capitalize()|escape_markdown }}{% if not loop.last %}, {% endif %}{% endfor %}
+```
+    {% endfor %}
