@@ -81,6 +81,63 @@ class PrivilegesCog(discord.Cog):
         resp: str = await template.render_async(user=user, servers_roles=servers_roles)
         await message.edit_original_response(content=resp)
 
+    @privileges_group.command()
+    async def set(
+        self,
+        context: discord.ApplicationContext,
+        steam_id: str,
+        name: str,
+        role: str,
+        duration: int = None,
+        hide: bool = True,
+    ) -> None:
+        try:
+            int(steam_id)
+        except ValueError:
+            await context.send_response("Неправильный steam_id", ephemeral=True)
+
+        permissions = self.get_permissions(context, "WRITE")
+
+        if (
+            permissions == self.config["NONE_INDICATOR"]
+            or permissions != self.config["ALL_INDICATOR"]
+            and role not in permissions
+        ):
+            await context.send_response("У вас нет прав для запроса", ephemeral=True)
+            self.logger.info(f"{context.user.id} Запросил добавление {role} без прав")
+            return
+
+        message: discord.Interaction = await context.send_response("Иду добавлять", ephemeral=hide)
+
+        try:
+            role_config = self.config["PRIVILEGES"]["ROLE_WEBHOOK"][role]
+        except KeyError:
+            await message.edit_original_response(
+                content="Вебхук для данной роли не найден, проверьте название роли или конфигурацию бота"
+            )
+            return
+
+        url_postfix: str = role_config["url_postfix"]
+        hmac_key: str = role_config["hmac_key"]
+        hmac_header: str = role_config["hmac_header"]
+        hmac_hash: str = role_config["hmac_hash"]
+
+        comment = f"Добавил {context.user.global_name} {context.user.id}"
+
+        async with api.ConfiguratorSession(self.api_url) as session:
+            try:
+                await session.call_role_webhook(
+                    url_postfix, steam_id, name, comment, duration, hmac_key, hmac_hash, hmac_header
+                )
+            except api.BaseApiError:
+                await message.edit_original_response(content="На текущий момент сервис недоступен")
+                return
+
+        template = self.template_env.get_template("privileged_set.md.j2")
+        resp: str = await template.render_async(steam_id=steam_id, role=role)
+
+        await message.edit_original_response(content=resp)
+
 
 def setup_cog(bot: Bot, config: dict[str, Any], template_env: jinja2.Environment) -> None:
     bot.add_cog(PrivilegesCog(bot, config, template_env))

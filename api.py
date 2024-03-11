@@ -1,3 +1,4 @@
+import hmac
 import json
 import logging
 from typing import Any, Iterable
@@ -91,3 +92,41 @@ class ConfiguratorSession:
             raise ConnectionError("Ошибка подключения")
 
         return self._parse_response(resp, data)
+
+    async def call_role_webhook(
+        self,
+        url_postfix: str,
+        steam_id: int,
+        name: str,
+        comment: str,
+        duration_until_end: int | None,
+        hmac_key: str,
+        hmac_hash: str,
+        hmac_header: str,
+    ) -> bool:
+
+        data = {
+            "steam_id": steam_id,
+            "name": name,
+            "comment": comment,
+        }
+
+        if duration_until_end:
+            data["duration_until_end"] = duration_until_end
+
+        json_data = json.dumps(data)
+        hmac_digest = hmac.digest(hmac_key.encode(), json_data.encode(), hmac_hash).hex()
+
+        try:
+            resp: aiohttp.ClientResponse = await self.session.post(
+                f"/v1/api/privileged/role_webhook/{url_postfix}/",
+                data=json_data,
+                headers={hmac_header: hmac_digest, "Content-Type": "application/json"},
+            )
+            data: str = await resp.text()
+        except aiohttp.ClientError:
+            raise ConnectionError("Ошибка подключения")
+
+        parsed_data = self._parse_response(resp, data)
+
+        return parsed_data

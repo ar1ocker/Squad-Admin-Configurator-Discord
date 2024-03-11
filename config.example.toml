@@ -11,6 +11,22 @@ TOKEN="Token <token>"
 vip = 1
 seedvip = 3
 admin = 2
+# Сопоставление названия вебхука с его url и параметрами hmac
+[PRIVILEGES.ROLE_WEBHOOK.vip]
+url_postfix = "webhook"
+hmac_key = "secretkey"
+hmac_hash = "sha256"
+hmac_header = "X-SIGNATURE"
+[PRIVILEGES.ROLE_WEBHOOK.admin]
+url_postfix = ""
+hmac_key = ""
+hmac_hash = "sha256"
+hmac_header = "X-SIGNATURE"
+[PRIVILEGES.ROLE_WEBHOOK.moderator]
+url_postfix = ""
+hmac_key = ""
+hmac_hash = "sha256"
+hmac_header = "X-SIGNATURE"
 
 [DISCORD]
 # токен доступа к боту дискорда
