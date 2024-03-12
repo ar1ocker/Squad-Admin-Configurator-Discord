@@ -15,4 +15,4 @@ COPY ./ ./
 RUN chown -R appuser /app
 USER appuser
 
-CMD ["python", "main.py"]
+CMD ["python", "squad_admin_configurator_discord/main.py"]
